@@ -1,0 +1,37 @@
+[package]
+name = "sonus-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Charles Adedotun <charles.adedotun8@gmail.com>"]
+description = "Sub-250ms Safe Rust PipeWire to Apple AirPlay 2 / RAOP audio engine & DACP touch daemon"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/charles-adedotun/sonus-rs"
+default-run = "sonus"
+
+[[bin]]
+name = "sonus"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1.38", features = ["full"] }
+clap = { version = "4.5", features = ["derive"] }
+bytes = "1.6"
+chacha20poly1305 = "0.10"
+sha2 = "0.10"
+hkdf = "0.12"
+num-bigint = "0.4"
+rand = "0.8"
+plist = "1.6"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+thiserror = "1.0"
+socket2 = { version = "0.6", features = ["all"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
