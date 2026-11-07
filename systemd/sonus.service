@@ -1,0 +1,29 @@
+[Unit]
+Description=Sonus AirPlay 2 & DACP Audio Engine
+Documentation=https://github.com/charles-adedotun/sonus-rs
+After=pipewire.service pipewire-pulse.service wireplumber.service
+Wants=pipewire.service pipewire-pulse.service wireplumber.service
+PartOf=pipewire.service
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/sonus daemon
+Restart=always
+RestartSec=2
+
+# Real-time audio scheduling & memory locking
+LimitRTPRIO=95
+LimitRTTIME=infinity
+LimitMEMLOCK=infinity
+MemoryMax=64M
+
+# Environment Defaults (override in ~/.config/sonus/sonus.env if needed)
+EnvironmentFile=-%h/.config/sonus/sonus.env
+Environment=RUST_LOG=info,sonus_rs=debug
+Environment=HOMEPOD_PORT=7000
+Environment=HOMEPOD_NAME=Office
+Environment=HOMEPOD_SINK_NAME=HomePod
+Environment=HOMEPOD_DACP_PORT=3689
+
+[Install]
+WantedBy=default.target
