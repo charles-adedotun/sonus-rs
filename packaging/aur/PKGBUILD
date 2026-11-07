@@ -1,0 +1,64 @@
+# Maintainer: Charles Adedotun <charles.adedotun8@gmail.com>
+pkgname=sonus-rs
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Sub-250ms Safe Rust PipeWire to Apple AirPlay 2 / RAOP audio engine & DACP touch daemon"
+arch=('x86_64' 'aarch64')
+url="https://github.com/charles-adedotun/sonus-rs"
+license=('MIT' 'Apache-2.0')
+depends=('glibc' 'gcc-libs' 'pipewire')
+optdepends=(
+    'wireplumber: Session manager for PipeWire'
+    'playerctl: MPRIS desktop media player controller'
+)
+makedepends=('cargo')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+prepare() {
+    cd "$pkgname-$pkgver"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+    cd "$pkgname-$pkgver"
+    export RUSTUP_TOOLCHAIN=stable
+    export CARGO_TARGET_DIR=target
+    cargo build --frozen --release --all-features
+}
+
+check() {
+    cd "$pkgname-$pkgver"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo test --frozen --all-features
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+
+    # Install main binary as /usr/bin/sonus
+    if [ -f "target/release/sonus" ]; then
+        install -Dm755 "target/release/sonus" "$pkgdir/usr/bin/sonus"
+    elif [ -f "target/release/sonus-rs" ]; then
+        install -Dm755 "target/release/sonus-rs" "$pkgdir/usr/bin/sonus"
+    fi
+
+    # Install systemd user unit (/usr/lib/systemd/user/sonus.service)
+    # Adjust ExecStart to point to system-wide /usr/bin/sonus
+    install -Dm644 "systemd/sonus.service" "$pkgdir/usr/lib/systemd/user/sonus.service"
+    sed -i 's|%h/\.local/bin/sonus|/usr/bin/sonus|g' "$pkgdir/usr/lib/systemd/user/sonus.service"
+
+    # Install PipeWire drop-in configuration
+    install -Dm644 "pipewire/60-homepod.conf" "$pkgdir/usr/share/pipewire/pipewire.conf.d/60-homepod.conf"
+
+    # Install documentation
+    install -Dm644 "README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+    # Install licenses if present
+    for lic in LICENSE LICENSE-MIT LICENSE-APACHE; do
+        if [ -f "$lic" ]; then
+            install -Dm644 "$lic" "$pkgdir/usr/share/licenses/$pkgname/$lic"
+        fi
+    done
+}
